@@ -118,7 +118,9 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
+mkdocs.yml
 /site
+/material
 
 # mypy
 .mypy_cache/
@@ -130,3 +132,9 @@ dmypy.json
 
 # Vscode
 /.vscode
+
+# pytest
+/.pytest_cache
+
+# Ignore DS store
+.DS_Store

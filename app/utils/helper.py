@@ -1,88 +1,61 @@
 """
 FILE: helper.py
-DESCRIPTION: Read raw files from GitHub
+DESCRIPTION: All functions for helping small tasks
 AUTHOR: Nuttaphat Arunoprayoch
-DATE: 9-Feb-2020
+DATE: 04-April-2020
 """
 # Import libraries
-import requests
-import csv
-import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import List, TypeVar
+
+import pandas as pd
+import pycountry
+import requests
 
 
-# Base URL for timeseries
-BASE_URL_TIME_SERIES = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_{}_global.csv'
-CATEGORIES = ['confirmed', 'deaths', 'recovered']
-
-# Base URL for Daily Reports
-BASE_URL_DAILY_REPORTS = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{}.csv'
+# Data preprocessing (DataFrame)
+def helper_df_cleaning(df: pd.DataFrame) -> pd.DataFrame:
+    """ Fill all empty values with am empty string (e.g., '') """
+    return df.fillna('')
 
 
-# Get data from daily reports
-def get_data_daily_reports() -> pd.DataFrame:
-    """ Get data from BASE_URL_DAILY_REPORTS """
-    current_datetime = datetime.utcnow().strftime('%m-%d-%Y')
-    url = BASE_URL_DAILY_REPORTS.format(current_datetime)
+# Data preprocessing (DataFrame's columns)
+var_types = TypeVar('ensure_dtype', int, float, str)
+def helper_df_cols_cleaning(df: pd.DataFrame, cols: List[str], ensure_dtype: var_types = None) -> pd.DataFrame:
+    """ Clean certain colomns in a DataFrame """
+    df[cols] = df[cols].fillna(0) # Replace empty cells with 0
+    df[cols] = df[cols].replace('', 0) # Replace '' with 0
 
-    # Check the latest file
-    if requests.get(url).status_code == 404:
-        current_datetime = datetime.strftime(datetime.utcnow() - timedelta(1), '%m-%d-%Y')
-        url = BASE_URL_DAILY_REPORTS.format(current_datetime)
+    if ensure_dtype and ensure_dtype in [int, float, str]:
+        df[cols] = df[cols].astype(ensure_dtype)
 
-    if requests.get(url).status_code == 404:
-        current_datetime = datetime.strftime(datetime.utcnow() - timedelta(2), '%m-%d-%Y')
-        url = BASE_URL_DAILY_REPORTS.format(current_datetime)
-
-    # Extract data
-    res = requests.get(url)
-    text = res.text
-
-    data = list(csv.DictReader(text.splitlines()))
-    df = pd.DataFrame(data)
-    
-    # Data pre-processing
-    concerned_columns = ['Confirmed', 'Deaths', 'Recovered', 'Active']
-    df[concerned_columns] = df[concerned_columns].fillna(0) # Replace empty cells with 0
-    df[concerned_columns] = df[concerned_columns].replace('', 0) # Replace '' with 0
-    df[concerned_columns] = df[concerned_columns].astype(int)
-    
     return df
 
 
-# API v1
-def get_data(time_series: bool = False) -> Dict[str, pd.DataFrame]:
-    """ Get the dataset from https://github.com/CSSEGISandData/COVID-19 """
-    dataframes = {}
+# Get latest data
+def helper_get_latest_data_url(base_url: str) -> str:
+    """ Get the latest base URL """
+    time_format = '%m-%d-%Y'
+    current_datetime = datetime.utcnow().strftime(time_format)
+    latest_base_url = base_url.format(current_datetime)
 
-    # Iterate through all files
-    for category in CATEGORIES:
-        url = BASE_URL_TIME_SERIES.format(category)
-        res = requests.get(url)
-        text = res.text
+    # Check the latest file by re-acquiring file
+    # If not found, continue
+    time_delta = 1
+    while requests.get(latest_base_url).status_code == 404:
+        current_datetime = datetime.strftime(datetime.utcnow() - timedelta(time_delta), time_format)
+        latest_base_url = base_url.format(current_datetime)
+        time_delta += 1
 
-        # Extract data
-        data = list(csv.DictReader(text.splitlines()))
-        df = pd.DataFrame(data)
-        df['Country/Region'] = df['Country/Region'].apply(lambda country_name: country_name.strip()) # Eliminate whitespace
-        df['Country/Region'] = df['Country/Region'].str.replace(' ', '_')
+    return latest_base_url
 
-        # Data Preprocessing
-        if time_series:
-            df = df.T.to_dict()
-        else:
-            df = df.iloc[:, [0, 1, -1]] # Select only Region, Country and its last values
-            datetime_raw = list(df.columns.values)[-1] # Ex) '2/11/20 20:44'
-            df.columns = ['Province/State', 'Country/Region', category]
 
-            df[category].fillna(0, inplace=True) # Replace empty cells with 0
-            df[category].replace('', 0, inplace=True) # Replace '' with 0
-
-            df['datetime'] = datetime_raw
-            pd.to_numeric(df[category])
-            df.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)
-
-        dataframes[category.lower()] = df
-
-    return dataframes
+# Look up a country name from a country code
+def helper_lookup_country(country: str) -> str:
+    """ Look up a country name from a country code """
+    country_name = pycountry.countries.lookup(country).name # Select the first portion of str when , is found
+    if ',' in country_name:
+        country_name = country_name.split(',')[0]
+    elif ' ' in country_name:
+        country_name = country_name.split(' ')[-1]
+    return country_name

@@ -1,0 +1,74 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "nat236919",
+      "name": "Nuttaphat Arunoprayoch",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9074112?v=4",
+      "profile": "http://nuttaphat.azurewebsites.net",
+      "contributions": [
+        "maintenance",
+        "code",
+        "bug",
+        "doc",
+        "ideas",
+        "review"
+      ]
+    },
+    {
+      "login": "soapy1",
+      "name": "Sophia Castellarin",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/976973?v=4",
+      "profile": "https://github.com/soapy1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "endoffile78",
+      "name": "Jeremy",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/11342054?v=4",
+      "profile": "https://keybase.io/endoffile78",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ChooseYourPlan",
+      "name": "Tim",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/32968964?v=4",
+      "profile": "https://github.com/ChooseYourPlan",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "melsaa",
+      "name": "melsaa",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/32761948?v=4",
+      "profile": "https://github.com/melsaa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "owen-duncan-snobel",
+      "name": "owen-duncan-snobel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43126781?v=4",
+      "profile": "https://github.com/owen-duncan-snobel",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "covid19-api",
+  "projectOwner": "nat236919",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}

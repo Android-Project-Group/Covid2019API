@@ -1,18 +1,26 @@
 """
-FILE: covid_model.py
-DESCRIPTION: Prepare the data as API-ready
+FILE: covid_api_v1_integrator.py
+DESCRIPTION: Integrators for API v1
 AUTHOR: Nuttaphat Arunoprayoch
-DATE: 9-Feb-2020
+DATE: 02-March-2021
 """
 # Import libraries
-import pandas as pd
 from datetime import datetime
-from typing import Dict, List, Any
-from utils.helper import get_data
+from typing import Any, Dict, List
+
+import pandas as pd
+
+from models.covid_api_v1_model import (ConfirmedModel, CountriesModel,
+                                         CurrentListModel, CurrentModel,
+                                         DeathsModel, RecoveredModel,
+                                         TimeseriesCoordinatesModel,
+                                         TimeseriesDataModel, TimeseriesModel,
+                                         TotalModel)
+from utils.get_data import get_data
 
 
 # Create a model and its methods
-class NovelCoronaAPI:
+class CovidAPIv1:
     """ Model and Its methods """
     def __init__(self) -> None:
         """ Get data from helper -> the source data """
@@ -42,22 +50,21 @@ class NovelCoronaAPI:
         current_data = {country: {'confirmed': 0, 'deaths': 0, 'recovered': 0} for country in countries}
 
         # Extractor
-        def extractor(col: str, df: pd.DataFrame) -> None:
+        def _extractor(col: str, df: pd.DataFrame) -> None:
             temp_data = df.T.to_dict()
             for data in temp_data.values():
                 try:
                     current_data[data['Country/Region']][col] += int(data[col])
                 except:
-                    None
-
+                    pass
             return None
 
         # Add data to current_data
         df_list = {'confirmed': self.df_confirmed, 'deaths': self.df_deaths, 'recovered': self.df_recovered}
-        [extractor(col, df) for col, df in df_list.items()]
+        [_extractor(col, df) for col, df in df_list.items()]
 
-        # Sort by Confirmed
-        current_data = {country_name: country_data for country_name, country_data
+        # Create Models sorted by Confirmed
+        current_data = {country_name: CurrentModel(**country_data) for country_name, country_data
                                                     in sorted(current_data.items(), key=lambda data: data[-1]['confirmed'], reverse=True)}
 
         # Check if a List form is required
@@ -73,29 +80,29 @@ class NovelCoronaAPI:
     def get_confirmed_cases(self) -> Dict[str, int]:
         """ Summation of all confirmed cases """
         data = {'confirmed': sum([int(i) for i in self.df_confirmed['confirmed']])}
-        data = self.add_dt_and_ts(data)
+        data = ConfirmedModel(**self.add_dt_and_ts(data))
         return data
 
     def get_deaths(self) -> Dict[str, int]:
         """ Summation of all deaths """
         data = {'deaths': sum([int(i) for i in self.df_deaths['deaths']])}
-        data = self.add_dt_and_ts(data)
+        data = DeathsModel(**self.add_dt_and_ts(data))
         return data
 
     def get_recovered(self) -> Dict[str, int]:
         """ Summation of all recovers """
         data = {'recovered': sum([int(i) for i in self.df_recovered['recovered']])}
-        data = self.add_dt_and_ts(data)
+        data = RecoveredModel(**self.add_dt_and_ts(data))
         return data
 
     def get_total(self) -> Dict[str, Any]:
         """ Summation of Confirmed, Deaths, Recovered """
         data = {
-            'confirmed': self.get_confirmed_cases()['confirmed'],
-            'deaths': self.get_deaths()['deaths'],
-            'recovered': self.get_recovered()['recovered']
+            'confirmed': self.get_confirmed_cases().confirmed,
+            'deaths': self.get_deaths().deaths,
+            'recovered': self.get_recovered().recovered
             }
-        data = self.add_dt_and_ts(data)
+        data = TotalModel(**self.add_dt_and_ts(data))
         return data
 
     def get_affected_countries(self) -> Dict[str, List]:
@@ -103,7 +110,7 @@ class NovelCoronaAPI:
         # Sorted alphabetically and exlucde 'Others'
         sort_filter_others = lambda country_list: sorted([country for country in country_list if country not in ['Others']])
         data = {'countries': sort_filter_others(self.df_confirmed['Country/Region'].unique().tolist())}
-        data = self.add_dt_and_ts(data)
+        data = CountriesModel(**self.add_dt_and_ts(data))
         return data
 
     def get_time_series(self) -> Dict[str, Dict]:
